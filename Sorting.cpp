@@ -9,6 +9,9 @@
 using namespace std;
 
 const int A_SIZE = 10000;
+int Swaps;
+int Comparisons;
+enum SortType{ bubble, quick, insertion, shell, merge};
 
 
 
@@ -44,36 +47,29 @@ void Copy(int * src, int *dest, int n)
 
 
 
-
-
 void BubbleSort(int data[], int n)
 {
 	int i, j, temp;
-	int swaps = 0, comparisons = 0;
 	for (i = 1; i < n; i++)
 	{
 		for (j = 0; j < n - 1; j++)
 		{
+			Comparisons++;
 			if (data[j] > data[j + 1])
 			{
 				temp = data[j];
 				data[j] = data[j + 1];
 				data[j + 1] = temp;
-				swaps++;
-				comparisons++;
+				Swaps++;
 			}
 		}
 	}
-
-	cout << "Number of swaps: " << swaps << endl;
-	cout << "Number of comparisons: " << comparisons << endl;
 }
 
 
 void InsertionSort(int data[], int n)
 {
 	int i, j, element;
-	int swaps = 0, comparisons = 0;
 	for (i = 1; i < n; i++)
 	{
 		element = data[i];
@@ -82,14 +78,12 @@ void InsertionSort(int data[], int n)
 		{
 			data[j] = data[j - 1];
 			j = j - 1;
+			Comparisons++;
+			Swaps++;
+			
 		}
 		data[j] = element;
-		swaps++;
-		comparisons++;
 	}
-
-	cout << "Number of swaps: " << swaps << endl;
-	cout << "Number of comparisons: " << comparisons << endl;
 }
 
 
@@ -98,7 +92,6 @@ void ShellSort(int data[], int n)
 {
 	int temp, gap, i;
 	int swapped;
-	int swaps = 0, comparisons = 0;
 	gap = n / 2;
 	do
 	{
@@ -106,106 +99,160 @@ void ShellSort(int data[], int n)
 			swapped = 0;
 			for (i = 0; i < n - gap; i++)
 			{
+				Comparisons++;
 				if (data[i] > data[i + gap])
 				{
 					temp = data[i];
 					data[i] = data[i + gap];
 					data[i + gap] = temp;
 					swapped = 1;
-					swaps++;
-					comparisons++;
+					Swaps++;
 				}
 			}
 		} while (swapped == 1);
 	} while ((gap = gap / 2) >= 1);
-
-	cout << "Number of swaps: " << swaps << endl;
-	cout << "Number of comparisons: " << comparisons << endl;
 }
 
 
 
 
-int QuickSortPartition(int data[], int low, int high)
+int QuickSortPartition(int data[], int left, int right)
 {
-	int pivot, i, j;
-	pivot = data[low];
-	j = high + 1;
-	i = low;
+	int i = left, j = right;
+	int tmp;
+	int pivot = data[(left + right) / 2];
 
-	do
-	{
-		i++;
-		while (data[i] < pivot && low <= high)
-		{
-			do
-			{
-				j++;
-			} while (pivot < data[j]);
+	while (i <= j) {
+		while (data[i] < pivot)
+			i++;
 
-			if (i < j)
-			{
-				int temp = data[i];
-				data[i] = data[j];
-				data[j] = temp;
-			}
+		while (data[j] > pivot)
+			j--;
+
+		if (i <= j) {
+			tmp = data[i];
+			data[i] = data[j];
+			data[j] = tmp;
+			Swaps++;
+			i++;
+			j--;
 		}
-	} while (i < j);
-	data[low] = data[j];
-	data[j] = pivot;
-	return j;
+	};
+	return i;
 }
-void QuickSort(int data[], int low, int high)
+void QuickSort(int data[], int left, int right)
 {
-	int k;
-	if (low < high)
+	
+	int index = QuickSortPartition(data, left, right);
+	Comparisons++;
+	if (left < index - 1)
 	{
-		k = QuickSortPartition(data, low, high);
-		QuickSort(data, low, k - 1);
-		QuickSort(data, k + 1, high);
+		QuickSort(data, left, index - 1);
+	}
+
+	if (index < right)
+	{
+		QuickSort(data, index, right);
 	}
 }
 
 
 
-void Merge(int data[], int low, int high, int mid)
+void Merge(int data[], int size1, int size2)
 {
-	int i, j, k, C[A_SIZE];
-	i = low;
-	j = mid + 1;
-	k = 0;
-	while ((i <= mid) && (j <= high))
-	{
-		if (data[i] < data[j])
+	int temp[A_SIZE];
+	int ptr1 = 0, ptr2 = 0;
+	int *arr1 = data, *arr2 = data + size1;
+
+	while (ptr1 + ptr2 < size1 + size2) {
+		
+		Swaps++;
+		if (ptr1 < size1 && arr1[ptr1] <= arr2[ptr2] || ptr1 < size1 && ptr2 >= size2)
 		{
-			C[k] = data[i++];
+			temp[ptr1 + ptr2] = arr1[ptr1++];
+			Comparisons++;
 		}
-		else
+		if (ptr2 < size2 && arr2[ptr2] < arr1[ptr1] || ptr2 < size2 && ptr1 >= size1)
 		{
-			C[k] = data[j++];
+			temp[ptr1 + ptr2] = arr2[ptr2++];
+			Comparisons++;
 		}
-		k++;
 	}
-	while (i <= mid)
+
+	for (int i = 0; i < size1 + size2; i++)
 	{
-		C[k++] = data[i++];
-	}
-	for (i = low, j = 0; i <= high; i++, j++)
-	{
-		data[i] = C[j];
+		data[i] = temp[i];
 	}
 }
-void MergeSort(int data[], int low, int high)
+void MergeSort(int data[], int n)
 {
-	int mid;
-	if (low < high)
-	{
-		mid = (low + high) / 2;
-		MergeSort(data, low, mid);
-		MergeSort(data, mid + 1, high);
-		Merge(data, low, high, mid);
-	}
+	if (n == 1)
+		return;
+
+	
+	int size1 = n / 2, size2 = n - size1;
+	MergeSort(data, size1);
+	MergeSort(data + size1, size2);
+	Merge(data, size1, size2);
+	
 }
+
+
+
+
+
+void RunSort(int data[], string unsortedType, SortType sType)
+{
+	int sortData[A_SIZE];
+	Swaps = 0;
+	Comparisons = 0;
+	string sortType = "";
+	Copy(data, sortData, A_SIZE);
+
+	switch (sType)
+	{
+	case bubble:
+		sortType = "Bubble Sort";
+		BubbleSort(sortData, A_SIZE);
+		break;
+	case quick:
+		sortType = "Quick Sort";
+		QuickSort(sortData, 0, A_SIZE - 1);
+		break;
+	case shell:
+		sortType = "Shell Sort";
+		ShellSort(sortData, A_SIZE);
+		break;
+	case insertion:
+		sortType = "Insrtion Sort";
+		InsertionSort(sortData, A_SIZE);
+		break;
+	case merge:
+		sortType = "Merge Sort";
+		MergeSort(sortData, A_SIZE);
+		break;
+	}
+
+	cout << endl;
+	cout << sortType << " " << unsortedType << endl;
+	cout << "Number of swaps: " << Swaps << endl;
+	cout << "Number of comparisons: " << Comparisons << endl;
+
+	/*
+	for (int k = 0; k < A_SIZE; k++)
+	{
+		cout << data[k] << " ";
+	}
+
+	cout << endl;
+	for (int k = 0; k < A_SIZE; k++)
+	{
+		cout << sortData[k] << " ";
+	}
+	*/
+}
+
+
 
 
 
@@ -214,106 +261,53 @@ void MergeSort(int data[], int low, int high)
 int main()
 {
 	int data[A_SIZE];
-	int sortData[A_SIZE];
 	
+	
+
+	/*
+	WriteDataToArray("Test.txt", data, A_SIZE);
+	RunSort(data, "Test", bubble);
+	RunSort(data, "Test", quick);
+	RunSort(data, "Test", insertion);
+	RunSort(data, "Test", shell);
+	RunSort(data, "Test", merge);
+	*/
 	
 	WriteDataToArray("DataFewUnique.txt", data, A_SIZE);
+	RunSort(data, "Few Unique", bubble);
+	RunSort(data, "Few Unique", quick);
+	RunSort(data, "Few Unique", insertion);
+	RunSort(data, "Few Unique", shell);
+	RunSort(data, "Few Unique", merge);
 
-	cout << endl;
-	cout << "Bubble Sort 'Few Unique' " << endl;
-	Copy(data, sortData, A_SIZE);
-	BubbleSort(sortData, A_SIZE);
-
-	cout << endl;
-	cout << "Insertion Sort 'Few Unique' " << endl;
-	Copy(data, sortData, A_SIZE);
-	InsertionSort(sortData, A_SIZE);
-
-	cout << endl;
-	cout << "Shell Sort 'Few Unique' " << endl;
-	Copy(data, sortData, A_SIZE);
-	ShellSort(sortData, A_SIZE);
-
-
-	//Copy(data, sortData, A_SIZE);
-	//MergeSort(sortData, 0, A_SIZE-1);
-
-	//Copy(data, sortData, A_SIZE);
-	//QuickSort(sortData, 0, A_SIZE - 1);
-
-
+	
 	
 	
 	WriteDataToArray("DataNearlySorted.txt", data, A_SIZE);
+	RunSort(data, "Nearly Sorted", bubble);
+	RunSort(data, "Nearly Sorted", quick);
+	RunSort(data, "Nearly Sorted", insertion);
+	RunSort(data, "Nearly Sorted", shell);
+	RunSort(data, "Nearly Sorted", merge);
 
-	cout << endl;
-	cout << "Bubble Sort 'NearlySorted' " << endl;
-	Copy(data, sortData, A_SIZE);
-	BubbleSort(sortData, A_SIZE);
-
-	cout << endl;
-	cout << "Insertion Sort 'NearlySorted' " << endl;
-	Copy(data, sortData, A_SIZE);
-	InsertionSort(sortData, A_SIZE);
-
-	cout << endl;
-	cout << "Shell Sort 'NearlySorted' " << endl;
-	Copy(data, sortData, A_SIZE);
-	ShellSort(sortData, A_SIZE);
-
-	//Copy(data, sortData, A_SIZE);
-	//MergeSort(sortData, 0, A_SIZE-1);
 	
-	//Copy(data, sortData, A_SIZE);
-	//QuickSort(sortData, 0, A_SIZE - 1);
-
 
 	WriteDataToArray("DataRandom.txt", data, A_SIZE);
+	RunSort(data, "Random", bubble);
+	RunSort(data, "Random", quick);
+	RunSort(data, "Random", insertion);
+	RunSort(data, "Random", shell);
+	RunSort(data, "Random", merge);
 
-	cout << endl;
-	cout << "Bubble Sort 'Random' " << endl;
-	Copy(data, sortData, A_SIZE);
-	BubbleSort(sortData, A_SIZE);
-
-	cout << endl;
-	cout << "Insertion Sort 'Random' " << endl;
-	Copy(data, sortData, A_SIZE);
-	InsertionSort(sortData, A_SIZE);
-
-	cout << endl;
-	cout << "Shell Sort 'Random' " << endl;
-	Copy(data, sortData, A_SIZE);
-	ShellSort(sortData, A_SIZE);
-
-	//Copy(data, sortData, A_SIZE);
-	//MergeSort(sortData, 0, A_SIZE-1);
-	
-	//Copy(data, sortData, A_SIZE);
-	//QuickSort(sortData, 0, A_SIZE - 1);
 
 
 	WriteDataToArray("DataReversed.txt", data, A_SIZE);
+	RunSort(data, "Reversed", bubble);
+	RunSort(data, "Reversed", quick);
+	RunSort(data, "Reversed", insertion);
+	RunSort(data, "Reversed", shell);
+	RunSort(data, "Reversed", merge);
 
-	cout << endl;
-	cout << "Bubble Sort 'Reversed' " << endl;
-	Copy(data, sortData, A_SIZE);
-	BubbleSort(sortData, A_SIZE);
-
-	cout << endl;
-	cout << "Insertion Sort 'Reversed' " << endl;
-	Copy(data, sortData, A_SIZE);
-	InsertionSort(sortData, A_SIZE);
-	
-	cout << endl;
-	cout << "Shell Sort 'Reversed' " << endl;
-	Copy(data, sortData, A_SIZE);
-	ShellSort(sortData, A_SIZE);
-
-	//Copy(data, sortData, A_SIZE);
-	//MergeSort(sortData, 0, A_SIZE-1);
-
-	//Copy(data, sortData, A_SIZE);
-	//QuickSort(sortData, 0, A_SIZE - 2);
 	
 
 	system("pause");
